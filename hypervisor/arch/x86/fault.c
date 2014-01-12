@@ -12,6 +12,7 @@
 
 #include <jailhouse/printk.h>
 #include <jailhouse/processor.h>
+#include <asm/control.h>
 #include <asm/types.h>
 #include <asm/fault.h>
 #include <asm/vmx.h>
@@ -54,4 +55,13 @@ void panic_stop(struct per_cpu *cpu_data)
 
 	asm volatile("1: hlt; jmp 1b");
 	__builtin_unreachable();
+}
+
+void panic_halt(struct per_cpu *cpu_data)
+{
+	panic_printk("Parking CPU %d\n", cpu_data->cpu_id);
+	x86_enter_wait_for_sipi(cpu_data);
+
+	if (phys_processor_id() == panic_cpu)
+		panic_in_progress = 0;
 }
